@@ -1,4 +1,4 @@
-https://github.com/cloudify-cosmo/cloudify-common/archive/4.5.5.dev1.zip
+git+https://github.com/cloudify-cosmo/cloudify-common@CY-955-fix-inplace-upgrade#egg=cloudify-common==4.5.5.dev1
 
 # The Diamond plugin is not included as a dependency in the setup.py since it breaks
 # backwards compatibility with blueprints that require using an older version of the diamond-plugin.
