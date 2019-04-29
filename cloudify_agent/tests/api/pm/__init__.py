@@ -148,8 +148,8 @@ class BaseDaemonProcessManagementTest(BaseDaemonLiveTestCase):
         name = utils.internal.generate_agent_name()
 
         params = {
-            'rest_host': '127.0.0.1',
-            'broker_ip': '127.0.0.1',
+            'rest_host': ['127.0.0.1'],
+            'broker_ip': ['127.0.0.1'],
             'user': self.username,
             'workdir': self.temp_folder,
             'logger': self.logger,

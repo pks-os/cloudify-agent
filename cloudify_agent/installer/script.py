@@ -38,7 +38,7 @@ class AgentInstallationScriptBuilder(AgentInstaller):
         self.custom_env = None
         self.file_server_root = cloudify_utils.get_manager_file_server_root()
         self.file_server_url = utils.get_manager_file_server_url(
-            cloudify_agent.get_manager_ip(),
+            cloudify_agent['rest_host'][0],
             cloudify_agent['rest_port']
         )
 
@@ -65,7 +65,8 @@ class AgentInstallationScriptBuilder(AgentInstaller):
         """
         template = self._get_template(self.install_script_template)
         # Called before creating the agent env to populate all the variables
-        cert_content = self._get_local_cert_content() if add_ssl_cert else ''
+        cert_content = self.cloudify_agent['rest_ssl_cert'] \
+            if add_ssl_cert else ''
         remote_ssl_cert_path = self._get_remote_ssl_cert_path()
         # Called before rendering the template to populate all the variables
         daemon_env = self._create_agent_env()
@@ -87,16 +88,6 @@ class AgentInstallationScriptBuilder(AgentInstaller):
             add_ssl_cert=add_ssl_cert,
             tmpdir=self.cloudify_agent.tmpdir
         )
-
-    def _get_local_cert_content(self):
-        local_cert_paths = self._get_local_ssl_cert_paths()
-        certs = []
-        for local_cert_path in local_cert_paths:
-            local_cert_path = os.path.expanduser(local_cert_path)
-            with open(local_cert_path, 'r') as f:
-                certs.append(f.read().strip())
-        cert_content = '\n'.join(certs)
-        return cert_content
 
     def create_custom_env_file_on_target(self, environment):
         if not environment:
@@ -177,7 +168,7 @@ class AgentInstallationScriptBuilder(AgentInstaller):
         args_dict = dict(
             link=script_url,
             sudo=sudo,
-            ssl_cert_content=self._get_local_cert_content(),
+            ssl_cert_content=self.cloudify_agent['rest_ssl_cert'],
             ssl_cert_path=self._get_remote_ssl_cert_path(),
             tmpdir=self.cloudify_agent.tmpdir,
             name=self.cloudify_agent['name']

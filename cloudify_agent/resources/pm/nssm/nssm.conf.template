@@ -16,7 +16,7 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 echo Setting service environment
 
 "{{ nssm_path }}" set {{ name }} AppEnvironmentExtra ^
-REST_HOST={{ rest_host }} ^
+REST_HOST={{ rest_host|join(',') }} ^
 REST_PORT={{ rest_port }} ^
 LOCAL_REST_CERT_FILE="{{ local_rest_cert_file }}" ^
 MANAGER_FILE_SERVER_URL=https://{{ rest_host }}:{{ rest_port }}/resources ^
@@ -30,8 +30,7 @@ AGENT_LOG_MAX_HISTORY="{{ log_max_history }}" ^
 CFY_EXEC_TEMP="{{ executable_temp_path }}" ^
 {% endif %}
 CLOUDIFY_DAEMON_STORAGE_DIRECTORY="{{ storage_dir }}" ^
-AGENT_NAME="{{ name }}" ^
-CLOUDIFY_CLUSTER_SETTINGS_PATH="{{ cluster_settings_path }}"
+AGENT_NAME="{{ name }}"
 
 {% if service_user %}
 echo Registering agent service to run with user "{{ service_user}}"...

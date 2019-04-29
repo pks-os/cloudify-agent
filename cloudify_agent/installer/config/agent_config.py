@@ -137,8 +137,7 @@ class CloudifyAgentConfig(dict):
     def set_default_values(self):
         self._set_name()
         self.setdefault('network', constants.DEFAULT_NETWORK_NAME)
-        self._set_ips()
-        self._set_broker_cert()
+        self._set_ips_and_certs()
         # Remove the networks dict as it's no longer needed
         if 'networks' in self:
             self.pop('networks')
@@ -159,13 +158,6 @@ class CloudifyAgentConfig(dict):
         self.setdefault('log_level', defaults.LOG_LEVEL)
         self.setdefault('log_max_bytes', defaults.LOG_FILE_SIZE)
         self.setdefault('log_max_history', defaults.LOG_BACKUPS)
-
-    def _set_broker_cert(self):
-        self['broker_ssl_cert'] = '\n'.join(
-            broker.ca_cert_content.strip() for broker in
-            ctx.get_brokers(network=self['network'])
-            if broker.ca_cert_content
-        )
 
     def _set_process_management(self, runner):
         """
@@ -225,19 +217,23 @@ class CloudifyAgentConfig(dict):
             name = ctx.instance.id
         self['name'] = name
 
-    def get_manager_ip(self):
-        managers = [manager.networks[self['network']]
-                    for manager in ctx.get_managers(network=self['network'])]
-        # TODO make the agent work with multiple managers here
-        return managers[0]
+    def _set_ips_and_certs(self):
+        managers = ctx.get_managers(network=self['network'])
+        brokers = ctx.get_brokers(network=self['network'])
 
-    def get_broker_ip(self):
-        return [broker.networks[self['network']]
-                for broker in ctx.get_brokers(network=self['network'])]
+        self['rest_host'] = [manager.networks[self['network']]
+                             for manager in managers]
+        self['broker_ip'] = [broker.networks[self['network']]
+                             for broker in brokers]
 
-    def _set_ips(self):
-        self['rest_host'] = self.get_manager_ip()
-        self['broker_ip'] = self.get_broker_ip()
+        self['rest_ssl_cert'] = '\n'.join(
+            manager.ca_cert_content.strip() for manager in
+            managers if manager.ca_cert_content
+        )
+        self['broker_ssl_cert'] = '\n'.join(
+            broker.ca_cert_content.strip() for broker in
+            brokers if broker.ca_cert_content
+        )
 
     def set_execution_params(self):
         self.setdefault('local', False)
@@ -391,7 +387,7 @@ class CloudifyAgentConfig(dict):
 
         if agent_package_name:
             file_server_url = agent_utils.get_manager_file_server_url(
-                self['rest_host'], self['rest_port']
+                self['rest_host'][0], self['rest_port']
             )
             self['package_url'] = posix_join(
                 file_server_url, 'packages', 'agents', agent_package_name
